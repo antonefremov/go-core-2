@@ -8,12 +8,13 @@ import (
 )
 
 type crDocs []crawler.Document
+type ids []int
 
 // Store preserves the documents data
 type Store struct {
 	counter int
 	docs    crDocs
-	ind     map[uint64]int
+	ind     map[uint64][]int
 }
 
 // New creates a new store instance
@@ -21,7 +22,7 @@ func New() *Store {
 	return &Store{
 		counter: 0,
 		docs:    make([]crawler.Document, 0, 50),
-		ind:     make(map[uint64]int),
+		ind:     make(map[uint64][]int, 50),
 	}
 }
 
@@ -44,11 +45,17 @@ func (s *Store) Print() {
 
 // Search performs a search by the token passed in
 func (s *Store) Search(token *string) []string {
+	var d crawler.Document
 	res := make([]string, 0, 10)
 	h := hash(strings.ToLower(*token))
-	id := s.ind[h]
-	d := s.binarySearch(id, 0, len(s.docs))
-	res = append(res, fmt.Sprintf("%d -> %s -> %s", d.ID, d.URL, d.Title))
+	ids := s.ind[h]
+
+	for _, id := range ids {
+		d = s.binarySearch(id, 0, len(s.docs))
+		if d.ID != 0 {
+			res = append(res, fmt.Sprintf("%d -> %s -> %s", d.ID, d.URL, d.Title))
+		}
+	}
 	return res
 }
 
@@ -82,12 +89,19 @@ func (s *Store) index(id int, title string) {
 	title = strings.TrimRight(title, "\n")
 	title = strings.Replace(title, "-", "", -1)
 	title = strings.Replace(title, "&", "", -1)
-	
+
 	arr := strings.Split(title, " ")
 	for _, t := range arr {
 		h = hash(strings.ToLower(t))
 		if h > 0 {
-			s.ind[h] = id
+			if intArr, ok := s.ind[h]; !ok {
+				intArr = make([]int, 0, 5)
+				intArr = append(intArr, id)
+				s.ind[h] = intArr
+			} else {
+				intArr = append(intArr, id)
+				s.ind[h] = intArr
+			}
 		}
 	}
 }
@@ -95,7 +109,7 @@ func (s *Store) index(id int, title string) {
 // calculates polynomial hash
 func hash(text string) uint64 {
 	const (
-		a = 123 // base value for hash
+		a = 123    // base value for hash
 		m = 100003 // module on which hash is calculated
 	)
 
