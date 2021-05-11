@@ -22,4 +22,8 @@ func main() {
 	var iface interface{}
 	var f func(int) string
 	_, _, _ = myMap, iface, f
+	b := []byte{10, 11, 12, 13}
+	s1 := string(b)
+	b2 := []byte(s1)
+	_ = b2
 }
