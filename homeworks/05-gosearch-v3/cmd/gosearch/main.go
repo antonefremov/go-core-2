@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"go-core-2/homeworks/05-gosearch-v3/pkg/crawler/spider"
@@ -25,20 +26,27 @@ func main() {
 	var token = flag.String("s", "", "search for a particular word/token")
 	flag.Parse()
 	if *token == "" {
-		fmt.Println("exiting as no token to search for was provided by input")
+		log.Println("exiting as no token to search for was provided by input")
 		return
 	}
 
 	s := new()
 	f, err := os.Open(path)
-
-	// вот здесь ниже как бы мне поэлегантее можно было написать?
-	// ведь файла может и не быть... Проверить в if тип ошибки, а Retrieve вынести за if?
-	if err == nil {
-		docs, _ := s.store.Retrieve(f)
-		s.index.Append(docs)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			log.Println("error opening a file with presaved results")
+		} else {
+			log.Println("error opening presaved results", err.Error())
+		}
 	}
 	defer f.Close()
+
+	docs, err := s.store.Retrieve(f)
+	if err != nil {
+		log.Println("wasn't able to read from file")
+	}
+
+	s.index.Append(docs)
 
 	fmt.Println("Processing...")
 
@@ -56,8 +64,8 @@ func main() {
 	s.index.Build()
 
 	fmt.Println("Search results:")
-	docs := s.index.Search(token)
-	for _, d := range docs {
+	res := s.index.Search(token)
+	for _, d := range res {
 		fmt.Println(d)
 	}
 
@@ -73,8 +81,8 @@ func main() {
 	w.Close()
 }
 
-func new() *search {
-	s := search{}
+func new() *gosearch {
+	s := gosearch{}
 	s.sites = []string{"https://go.dev", "https://golang.org/"}
 	s.depth = 2
 	s.scanner = spider.New()
