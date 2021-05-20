@@ -5,39 +5,32 @@ import (
 	"encoding/json"
 	"go-core-2/homeworks/05-gosearch-v3/pkg/crawler"
 	"io"
-	"os"
 )
 
-const path = "filestore.txt"
+type Filestore struct{}
 
-func Save(d []crawler.Document) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
+func New() *Filestore {
+	return &Filestore{}
+}
+
+func (f *Filestore) Save(w io.Writer, d []crawler.Document) error {
 	b, err := json.Marshal(d)
 	if err != nil {
 		return err
 	}
 
-	err = store(f, b)
+	err = store(w, b)
 	if err != nil {
 		return err
 	}
-	f.Close()
 	return nil
 }
 
-func Retrieve() ([]crawler.Document, error) {
-	f, err := os.Open(path)
+func (f *Filestore) Retrieve(r io.Reader) ([]crawler.Document, error) {
+	b, err := get(r)
 	if err != nil {
 		return nil, err
 	}
-	b, err := get(f)
-	if err != nil {
-		return nil, err
-	}
-	f.Close()
 
 	d := make([]crawler.Document, 0, 5)
 	err = json.Unmarshal(b, &d)

@@ -3,7 +3,6 @@ package index
 import (
 	"fmt"
 	"go-core-2/homeworks/05-gosearch-v3/pkg/crawler"
-	"go-core-2/homeworks/05-gosearch-v3/pkg/storage/filestore"
 	"sort"
 	"strings"
 )
@@ -11,32 +10,23 @@ import (
 type crDocs []crawler.Document
 
 // Store preserves the documents data
-type Store struct {
+type Index struct {
 	counter int
 	docs    crDocs
 	ind     map[uint64][]int
 }
 
 // New creates a new store instance
-func New() *Store {
-	docsB, err := filestore.Retrieve()
-	if err != nil {
-		fmt.Println("Couldn't find any pre-saved results, scanning from scratch...")
-		return &Store{
-			counter: 0,
-			docs:    make([]crawler.Document, 0, 50),
-			ind:     make(map[uint64][]int, 50),
-		}
-	}
-	return &Store{
+func New() *Index {
+	return &Index{
 		counter: 0,
-		docs:    docsB,
+		docs:    make([]crawler.Document, 0, 50),
 		ind:     make(map[uint64][]int, 50),
 	}
 }
 
 // Append adds document items to the store
-func (s *Store) Append(docs []crawler.Document) {
+func (s *Index) Append(docs []crawler.Document) {
 	for _, d := range docs {
 		s.counter++
 		d.ID = s.counter
@@ -44,29 +34,28 @@ func (s *Store) Append(docs []crawler.Document) {
 	}
 }
 
-// Index builds internal index for the docs
-func (s *Store) Index() {
+// Build creates internal index for the docs
+func (s *Index) Build() {
 	for _, d := range s.docs {
 		s.index(d.ID, d.Title)
 	}
+
+	// sort the documents
+	s.Sort()
 }
 
 // IsEmpty indicates if docs array is empty
-func (s *Store) IsEmpty() bool {
+func (s *Index) IsEmpty() bool {
 	return len(s.docs) <= 0
 }
 
-// Save saves the indexed documents
-func (s *Store) Save() error {
-	err := filestore.Save(s.docs)
-	if err != nil {
-		return err
-	}
-	return nil
+// All retrieves the docs items
+func (s *Index) All() []crawler.Document {
+	return s.docs
 }
 
 // Search performs a search by the token passed in
-func (s *Store) Search(token *string) []string {
+func (s *Index) Search(token *string) []string {
 	var d crawler.Document
 	res := make([]string, 0, 10)
 	h := hash(strings.ToLower(*token))
@@ -82,11 +71,11 @@ func (s *Store) Search(token *string) []string {
 }
 
 // Sort sorts the store's docs array
-func (s *Store) Sort() {
+func (s *Index) Sort() {
 	sort.Sort(s.docs)
 }
 
-func (s *Store) binarySearch(id, l, r int) crawler.Document {
+func (s *Index) binarySearch(id, l, r int) crawler.Document {
 	if r < l {
 		return crawler.Document{}
 	}
@@ -106,7 +95,7 @@ func (s *Store) binarySearch(id, l, r int) crawler.Document {
 	}
 }
 
-func (s *Store) index(id int, title string) {
+func (s *Index) index(id int, title string) {
 	var h uint64
 	title = strings.TrimRight(title, "\n")
 	title = strings.Replace(title, "-", "", -1)
