@@ -46,7 +46,7 @@ func (s *Index) Build() {
 
 // IsEmpty indicates if docs array is empty
 func (s *Index) IsEmpty() bool {
-	return len(s.docs) <= 0
+	return len(s.docs) == 0
 }
 
 // All retrieves the docs items

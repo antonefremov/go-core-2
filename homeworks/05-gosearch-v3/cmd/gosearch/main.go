@@ -13,7 +13,7 @@ import (
 
 const path = "filestore.txt"
 
-type search struct {
+type gosearch struct {
 	scanner *spider.Service
 	sites   []string
 	depth   int
