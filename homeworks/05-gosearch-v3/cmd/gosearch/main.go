@@ -34,16 +34,16 @@ func main() {
 	f, err := os.Open(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			log.Println("error opening a file with presaved results")
+			log.Println("file does not exist")
 		} else {
-			log.Println("error opening presaved results", err.Error())
+			log.Println("error opening file", err.Error())
 		}
 	}
 	defer f.Close()
 
 	docs, err := s.store.Retrieve(f)
 	if err != nil {
-		log.Println("wasn't able to read from file")
+		log.Println("error reading from file")
 	}
 
 	s.index.Append(docs)
