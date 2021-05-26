@@ -8,7 +8,6 @@ import (
 	"go-core-2/homeworks/05-gosearch-v3/pkg/index"
 	"go-core-2/homeworks/05-gosearch-v3/pkg/storage"
 	"go-core-2/homeworks/05-gosearch-v3/pkg/storage/filestore"
-	"log"
 	"os"
 )
 
@@ -26,27 +25,35 @@ func main() {
 	var token = flag.String("s", "", "search for a particular word/token")
 	flag.Parse()
 	if *token == "" {
-		log.Println("exiting as no token to search for was provided by input")
+		fmt.Println("exiting as no token to search for was provided by input")
 		return
 	}
 
+	fileExists := true
 	s := new()
 	f, err := os.Open(path)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			log.Println("file does not exist")
-		} else {
-			log.Println("error opening file", err.Error())
-		}
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		fileExists = false
+		fmt.Println("Error opening file:", err.Error()) // ничего страшного не произошло, просто информируем пользователя
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		fileExists = false
+		fmt.Println("File doesn't exist") // опять же FYI
 	}
 	defer f.Close()
 
-	docs, err := s.store.Retrieve(f)
-	if err != nil {
-		log.Println("error reading from file")
+	if fileExists {
+		docs, err := s.store.Retrieve(f)
+		if err != nil {
+			fileExists = false
+			fmt.Println("Couldn't retrieve information from file") // тоже ФУЙ
+		}
+		s.index.Append(docs)
 	}
 
-	s.index.Append(docs)
+	if !fileExists {
+		fmt.Println("We couldn't retrieve pre-saved results (see the output above), so hold on tight!") // и тут ФУЙ
+	}
 
 	fmt.Println("Processing...")
 
@@ -54,7 +61,7 @@ func main() {
 		for _, url := range s.sites {
 			od, err := s.scanner.Scan(url, s.depth)
 			if err != nil {
-				log.Println("error when scanning a site:", err)
+				panic(err) // а вот тут уже всё серьезно и стоит жестко выйти (наверное)
 			}
 			s.index.Append(od)
 		}
@@ -70,15 +77,15 @@ func main() {
 	}
 
 	// save the indexed docs into the file storage
-	w, err := os.Create(path)
+	f, err = os.Create(path) // а можно ли переиспользовать f? defer f.Close() ведь сработает только после выхода из текущей функции?
 	if err != nil {
-		log.Println("couldn't create a file to store results", err)
+		fmt.Println("Couldn't create a file to store results", err) // FYI
 	}
-	err = s.store.Save(w, s.index.All())
+	err = s.store.Save(f, s.index.All())
 	if err != nil {
-		log.Println("couldn't save results", err)
+		fmt.Println("Couldn't save results", err) // FYI
 	}
-	w.Close()
+	f.Close() // а если был defer f.Close() выше, то нужна ли инструкция f.Close() здесь?
 }
 
 func new() *gosearch {

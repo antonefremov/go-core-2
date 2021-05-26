@@ -27,7 +27,7 @@ func (f *Filestore) Save(w io.Writer, d []crawler.Document) error {
 }
 
 func (f *Filestore) Retrieve(r io.Reader) ([]crawler.Document, error) {
-	b, err := get(r)
+	b, err := read(r)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func store(w io.Writer, b []byte) error {
 	return err
 }
 
-func get(r io.Reader) ([]byte, error) {
+func read(r io.Reader) ([]byte, error) {
 	scanner := bufio.NewScanner(r)
 	var b []byte
 	for scanner.Scan() {
