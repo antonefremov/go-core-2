@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"go-core-2/homeworks/05-gosearch-v3/pkg/crawler"
+	"go-core-2/homeworks/06-gosearch-v4/pkg/crawler"
 	"io"
 )
 

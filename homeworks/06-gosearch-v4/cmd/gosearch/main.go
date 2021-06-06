@@ -4,10 +4,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"go-core-2/homeworks/05-gosearch-v3/pkg/crawler/spider"
-	"go-core-2/homeworks/05-gosearch-v3/pkg/index"
-	"go-core-2/homeworks/05-gosearch-v3/pkg/storage"
-	"go-core-2/homeworks/05-gosearch-v3/pkg/storage/filestore"
+	"go-core-2/homeworks/06-gosearch-v4/pkg/crawler/spider"
+	"go-core-2/homeworks/06-gosearch-v4/pkg/index"
+	"go-core-2/homeworks/06-gosearch-v4/pkg/storage"
+	"go-core-2/homeworks/06-gosearch-v4/pkg/storage/filestore"
 	"os"
 )
 
