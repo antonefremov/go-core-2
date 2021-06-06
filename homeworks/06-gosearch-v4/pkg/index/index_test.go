@@ -2,7 +2,10 @@ package index
 
 import (
 	"go-core-2/homeworks/06-gosearch-v4/pkg/crawler"
+	"math/rand"
+	"sort"
 	"testing"
+	"time"
 )
 
 func TestIndex_Append(t *testing.T) {
@@ -54,4 +57,56 @@ func TestIndex_Search(t *testing.T) {
 	if len(res) != 2 {
 		t.Fatalf("получили %d, ожидалось %d", len(res), 2)
 	}
+}
+
+func BenchmarkBinarySearch(b *testing.B) {
+	data := sampleData()
+	s := New()
+	s.Append(data)
+	s.Build()
+	for i := 0; i < b.N; i++ {
+		n := rand.Intn(1_000_000)
+		res := s.Search(&data[n].Title)
+		_ = res
+	}
+}
+
+func sampleData() crDocs {
+	rand.Seed(time.Now().UnixNano())
+	var res crDocs
+	var d crawler.Document
+	for i := 0; i < 1_000_000; i++ {
+		d.ID = rand.Intn(1_000_000)
+		d.Title = RandStringBytesMaskImpr(10)
+		res = append(res, d)
+	}
+
+	sort.Slice(res, func(i, j int) bool { return res[i].ID < res[j].ID })
+	return res
+}
+
+// позаимствовано с https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-go
+func RandStringBytesMaskImpr(n int) string {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	const (
+		letterIdxBits = 6                    // 6 bits to represent a letter index
+		letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
+		letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
+	)
+
+	b := make([]byte, n)
+	// A rand.Int63() generates 63 random bits, enough for letterIdxMax letters!
+	for i, cache, remain := n-1, rand.Int63(), letterIdxMax; i >= 0; {
+		if remain == 0 {
+			cache, remain = rand.Int63(), letterIdxMax
+		}
+		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
+			b[i] = letterBytes[idx]
+			i--
+		}
+		cache >>= letterIdxBits
+		remain--
+	}
+
+	return string(b)
 }
